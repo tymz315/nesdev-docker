@@ -83,9 +83,54 @@ In Visual Studio Code, Created source code will be synced with your project dire
 
 ### How to compile
 
-Create "sample.nes" and run the following command in the Visual Studio Code terminal.(For NESASM)
+Create "sample.nes" and run the following command in the Visual Studio Code terminal.(For NESASM example)
 ```
 # nesasm sample.nes
 ```
+
+### Example
+
+![Development image](https://raw.githubusercontent.com/tymz315/nesdev-docker/5a20062e86df1907762f9936e25be0044865c7a6/assets/images/vscode.png)
+
+- .devcontainer/devcontainer.json
+
+    Uses Microsoft Hex Editor extension. And associate it *.nes file.
+
+    ```
+    {
+        "name": "NESDEV",
+        "image": "tymz315/nesdev",
+        "extensions": [
+            "ms-vscode.hexeditor"
+        ],
+        "settings": {
+            "workbench.editorAssociations": {
+                "*.nes": "hexEditor.hexedit"
+            }
+        }
+    }
+    ```
+
+- .vscode/tasks.json
+
+    Press *Ctrl+Shift+B* to run make.
+
+    ```
+    {
+        "version": "2.0.0",
+        "tasks": [
+            {
+                "label": "Make",
+                "type": "shell",
+                "command": "make all",
+                "problemMatcher": [],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                }
+            }
+        ]
+    }
+    ```
 
 Have fun!
