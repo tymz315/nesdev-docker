@@ -60,7 +60,7 @@ For Windows
 
 1. Install "Docker Desktop" on your system.
 
-1. (For Windows only) Install "WSL(ms-vscode-remote.remote-containers)" extension to Visual Studio Code.
+1. (For Windows only) Install "WSL(ms-vscode-remote.remote-wsl)" extension to Visual Studio Code.
 
 1. Install "Dev Containers(ms-vscode-remote.remote-containers)" extension to Visual Studio Code.
 
