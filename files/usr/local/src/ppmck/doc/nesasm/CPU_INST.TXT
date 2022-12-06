@@ -1,0 +1,322 @@
+
+ -*[ NES ASM v2.51 ]*-
+    ---------------
+
+
+    Instructions set
+    ----------------
+
+       +------+----------+-----------------------------+----------+
+       |      | NVTBDIZC | Description                 | Mode     |
+       +------+----------+-----------------------------+----------+
+       | ADC  | XX0---XX | Add with Carry              | #0xNXY<> |
+       | AND  | X-0---X- | Logical AND                 | #0xNXY<> |
+       | ASL  | X-0---XX | Arithmetic Shift left       | A0xNX    |
+       | BCC  | --0----- | Branch if Carry Clear       | r        |
+       | BCS  | --0----- | Branch if Carry Set         | r        |
+       | BEQ  | --0----- | Branch if Equal             | r        |
+       | BIT  | XX0---X- | Bit Test                    | 0N       |
+       | BMI  | --0----- | Branch if Minus             | r        |
+       | BNE  | --0----- | Branch if Not Equal         | r        |
+       | BPL  | --0----- | Branch if Plus              | r        |
+       | BRA  | --0----- | Branch Always (invalid)     | ???      |
+       | BRK  | --0----- | Break                       |          |
+       | BVC  | --0----- | Branch if Overflow Clear    | r        |
+       | BVS  | --0----- | Branch if Overflow Set      | r        |
+       | CLC  | --0----0 | Clear Carry flag            |          |
+       | CLD  | --0-0--- | Clear Decimal flag          |          |
+       | CLI  | --0--0-- | Clear Interrupt disable     |          |
+       | CLV  | -00----- | Clear Overflow flag         |          |
+       | CMP  | X-0---XX | Compare A with source       | #0xNXY<> |
+       | CPX  | X-0---XX | Compare X with source       | #0N      |
+       | CPY  | X-0---XX | Compare Y with source       | #0N      |
+       | DEC  | X-0---X- | Decrement                   | 0xNX     |
+       | DEX  | X-0---X- | Decrement X                 |          |
+       | DEY  | X-0---X- | Decrement Y                 |          |
+       | EOR  | X-0---X- | Logical Exclusive OR        | #0xNXY<> |
+       | INC  | X-0---X- | Increment                   | 0xNX     |
+       | INX  | X-0---X- | Increment X                 |          |
+       | INY  | X-0---X- | Increment Y                 |          |
+       | JMP  | --0----- | Jump                        | N*       |
+       | JSR  | --0----- | Jump to Sub Routine         | N        |
+       | LDA  | X-0---X- | Load A                      | #0xNXY<> |
+       | LDX  | X-0---X- | Load X                      | #0yNY    |
+       | LDY  | X-0---X- | Load Y                      | #0xNX    |
+       | LSR  | 0-0---XX | Logical Shift Right         | A0xNX    |
+       | NOP  | --0----- | No Operation                |          |
+       | ORA  | X-0---X- | Logical inclusive OR        | #0xNXY<> |
+       | PHA  | --0----- | Push A                      |          |
+       | PHP  | --0----- | Push P                      |          |
+       | PLA  | X-0---X- | Pull A                      |          |
+       | PLP  | XXXXXXXX | Pull P                      |          |
+       | ROL  | X-0---XX | Rotate Left                 | A0xNX    |
+       | ROR  | X-0---XX | Rotate Right                | A0xNX    |
+       | RTI  | XXXXXXXX | Return from Interrupt       |          |
+       | RTS  | --0----- | Return from Sub Routine     |          |
+       | SBC  | XX0---XX | Substract with Carry        | #0xNXY<> |
+       | SEC  | --0----1 | Set Carry flag              |          |
+       | SED  | --0-1--- | Set Decimal flag            |          |
+       | SEI  | --0--1-- | Set Interrupt disable       |          |
+       | STA  | --0----- | Store A                     | 0xNXY<>  |
+       | STX  | --0----- | Store X                     | 0yN      |
+       | STY  | --0----- | Store Y                     | 0xN      |
+       | TAX  | X-0---X- | Transfer A to X             |          |
+       | TAY  | X-0---X- | Transfer A to Y             |          |
+       | TSX  | X-0---X- | Transfer S to X             |          |
+       | TXA  | X-0---X- | Transfer X to A             |          |
+       | TXS  | --0----- | Transfer X to S             |          |
+       | TYA  | X-0---X- | Transfer Y to A             |          |
+       +------+----------+-----------------------------+----------+
+
+
+    Operand syntax
+    --------------
+
+        A        accumulator                            [A] 0
+        #i       immediate                              [#]
+        <n       zero page                              [0]
+        <n,X     zero page indexed by X                 [x]
+        <n,Y     zero page indexed by Y                 [y]
+        [n]      indirect (*)                           [*] 2
+        [n,X]    indirect pre-indexed by X (*)          [<]
+        [n],Y    indirect zero page post-indexed by Y   [>]
+        r        relative                               [r]
+        n        absolute                               [N] 2
+        n,X      absolute indexed by X                  [X] 2
+        n,Y      absolute indexed by Y                  [Y] 2
+
+        (*) can be zero page or absolute
+
+
+--
+
+       +------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+       |      |  A  |  #  |  0  |  x  |  y  |  *  |  <  |  >  |  r  |  N  |  X  |  Y  |
+       +------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+       | ADC  |     | $69 | $65 | $75 |     |     | $61 | $71 |     | $60 | $7D | $79 |
+       |      |     |  2  |  3  |  4  |     |     |  6  |  5* |     |  4  |  4* |  4* |
+       +------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+       | AND  |     | $29 | $25 | $35 |     |     | $21 | $31 |     | $2D | $3D | $39 |
+       |      |     |  2  |  3  |  4  |     |     |  6  |  5* |     |  4  |  4* |  4* |
+       +------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+       +------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+       +------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+       +------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+       +------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+       +------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+       +------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+       +------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+       +------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+       +------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+       +------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+       +------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+       +------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+       +------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+
+--
+
+                  A   A   A   B   B   B   B   B   B   B   B   B   B   C
+                  D   N   S   C   C   E   I   M   N   P   R   V   V   L
+                  C   D   L   C   S   Q   T   I   E   L   K   C   S   C
+  Accumulator  |  .   .   2   .   .   .   .   .   .   .   .   .   .   .
+  Immediate    |  2   2       .   .   .   .   .   .   .   .   .   .   .
+  Zero Page    |  3   3   5   .   .   .   3   .   .   .   .   .   .   .
+  Zero Page,X  |  4   4   6   .   .   .   .   .   .   .   .   .   .   .
+  Zero Page,Y  |  .   .   .   .   .   .   .   .   .   .   .   .   .   .
+  Absolute     |  4   4   6   .   .   .   4   .   .   .   .   .   .   .
+  Absolute,X   |  4*  4*  7   .   .   .   .   .   .   .   .   .   .   .
+  Absolute,Y   |  4*  4*  .   .   .   .   .   .   .   .   .   .   .   .
+  Implied      |  .   .   .   .   .   .   .   .   .   .   .   .   .   2
+  Relative     |  .   .   .   2** 2** 2** .   2** 2** 2** 7   2** 2** .
+  (Indirect,X) |  6   6   .   .   .   .   .   .   .   .   .   .   .   .
+  (Indirect),Y |  5*  5*  .   .   .   .   .   .   .   .   .   .   .   .
+  Abs. Indirect|  .   .   .   .   .   .   .   .   .   .   .   .   .   .
+               +-----------------------------------------------------------
+                  C   C   C   C   C   C   D   D   D   E   I   I   I   J
+                  L   L   L   M   P   P   E   E   E   O   N   N   N   M
+                  D   I   V   P   X   Y   C   X   Y   R   C   X   Y   P
+  Accumulator  |  .   .   .   .   .   .   .   .   .   .   .   .   .   .
+  Immediate    |  .   .   .   2   2   2   .   .   .   2   .   .   .   .
+  Zero Page    |  .   .   .   3   3   3   5   .   .   3   5   .   .   .
+  Zero Page,X  |  .   .   .   4   .   .   6   .   .   4   6   .   .   .
+  Zero Page,Y  |  .   .   .   .   .   .   .   .   .   .   .   .   .   .
+  Absolute     |  .   .   .   4   4   4   6   .   .   4   6   .   .   3
+  Absolute,X   |  .   .   .   4*  .   .   7   .   .   4*  7   .   .   .
+  Absolute,Y   |  .   .   .   4*  .   .   .   .   .   4*  .   .   .   .
+  Implied      |  2   2   2   .   .   .   .   2   2   .   .   2   2   .
+  Relative     |  .   .   .   .   .   .   .   .   .   .   .   .   .   .
+  (Indirect,X) |  .   .   .   6   .   .   .   .   .   6   .   .   .   .
+  (Indirect),Y |  .   .   .   5*  .   .   .   .   .   5*  .   .   .   .
+  Abs. Indirect|  .   .   .   .   .   .   .   .   .   .   .   .   .   5
+               +-----------------------------------------------------------
+                  J   L   L   L   L   N   O   P   P   P   P   R   R   R
+                  S   D   D   D   S   O   R   H   H   L   L   O   O   T
+                  R   A   X   Y   R   P   A   A   P   A   P   L   R   I
+  Accumulator  |  .   .   .   .   2   .   .   .   .   .   .   2   2   .
+  Immediate    |  .   2   2   2   .   .   2   .   .   .   .   .   .   .
+  Zero Page    |  .   3   3   3   5   .   3   .   .   .   .   5   5   .
+  Zero Page,X  |  .   4   .   4   6   .   4   .   .   .   .   6   6   .
+  Zero Page,Y  |  .   .   4   .   .   .   .   .   .   .   .   .   .   .
+  Absolute     |  6   4   4   4   6   .   4   .   .   .   .   6   6   .
+  Absolute,X   |  .   4*  .   4*  7   .   4*  .   .   .   .   7   7   .
+  Absolute,Y   |  .   4*  4*  .   .   .   4*  .   .   .   .   .   .   .
+  Implied      |  .   .   .   .   .   2   .   3   3   4   4   .   .   6
+  Relative     |  .   .   .   .   .   .   .   .   .   .   .   .   .   .
+  (Indirect,X) |  .   6   .   .   .   .   6   .   .   .   .   .   .   .
+  (Indirect),Y |  .   5*  .   .   .   .   5*  .   .   .   .   .   .   .
+  Abs. Indirect|  .   .   .   .   .   .   .   .   .   .   .   .   .   .
+               +-----------------------------------------------------------
+                  R   S   S   S   S   S   S   S   T   T   T   T   T   T
+                  T   B   E   E   E   T   T   T   A   A   S   X   X   Y
+                  S   C   C   D   I   A   X   Y   X   Y   X   A   S   A
+  Accumulator  |  .   .   .   .   .   .   .   .   .   .   .   .   .   .
+  Immediate    |  .   2   .   .   .   .   .   .   .   .   .   .   .   .
+  Zero Page    |  .   3   .   .   .   3   3   3   .   .   .   .   .   .
+  Zero Page,X  |  .   4   .   .   .   4   .   4   .   .   .   .   .   .
+  Zero Page,Y  |  .   .   .   .   .   .   4   .   .   .   .   .   .   .
+  Absolute     |  .   4   .   .   .   4   4   4   .   .   .   .   .   .
+  Absolute,X   |  .   4*  .   .   .   5   .   .   .   .   .   .   .   .
+  Absolute,Y   |  .   4*  .   .   .   5   .   .   .   .   .   .   .   .
+  Implied      |  6   .   2   2   2   .   .   .   2   2   2   2   2   2
+  Relative     |  .   .   .   .   .   .   .   .   .   .   .   .   .   .
+  (Indirect,X) |  .   6   .   .   .   6   .   .   .   .   .   .   .   .
+  (Indirect),Y |  .   5*  .   .   .   6   .   .   .   .   .   .   .   .
+  Abs. Indirect|  .   .   .   .   .   .   .   .   .   .   .   .   .   .
+               +-----------------------------------------------------------
+     *  Add one cycle if indexing across page boundary
+     ** Add one cycle if branch is taken, Add one additional if branching
+        operation crosses page boundary
+
+
+
+        00 - BRK                        20 - JSR
+        01 - ORA - (Indirect,X)         21 - AND - (Indirect,X)
+        02 - Future Expansion           22 - Future Expansion
+        03 - Future Expansion           23 - Future Expansion
+        04 - Future Expansion           24 - BIT - Zero Page
+        05 - ORA - Zero Page            25 - AND - Zero Page
+        06 - ASL - Zero Page            26 - ROL - Zero Page
+        07 - Future Expansion           27 - Future Expansion
+        08 - PHP                        28 - PLP
+        09 - ORA - Immediate            29 - AND - Immediate
+        0A - ASL - Accumulator          2A - ROL - Accumulator
+        0B - Future Expansion           2B - Future Expansion
+        0C - Future Expansion           2C - BIT - Absolute
+        0D - ORA - Absolute             2D - AND - Absolute
+        0E - ASL - Absolute             2E - ROL - Absolute
+        0F - Future Expansion           2F - Future Expansion
+        10 - BPL                        30 - BMI
+        11 - ORA - (Indirect),Y         31 - AND - (Indirect),Y
+        12 - Future Expansion           32 - Future Expansion
+        13 - Future Expansion           33 - Future Expansion
+        14 - Future Expansion           34 - Future Expansion
+        15 - ORA - Zero Page,X          35 - AND - Zero Page,X
+        16 - ASL - Zero Page,X          36 - ROL - Zero Page,X
+        17 - Future Expansion           37 - Future Expansion
+        18 - CLC                        38 - SEC
+        19 - ORA - Absolute,Y           39 - AND - Absolute,Y
+        1A - Future Expansion           3A - Future Expansion
+        1B - Future Expansion           3B - Future Expansion
+        1C - Future Expansion           3C - Future Expansion
+        1D - ORA - Absolute,X           3D - AND - Absolute,X
+        1E - ASL - Absolute,X           3E - ROL - Absolute,X
+        1F - Future Expansion           3F - Future Expansion
+
+        40 - RTI                        60 - RTS
+        41 - EOR - (Indirect,X)         61 - ADC - (Indirect,X)
+        42 - Future Expansion           62 - Future Expansion
+        43 - Future Expansion           63 - Future Expansion
+        44 - Future Expansion           64 - Future Expansion
+        45 - EOR - Zero Page            65 - ADC - Zero Page
+        46 - LSR - Zero Page            66 - ROR - Zero Page
+        47 - Future Expansion           67 - Future Expansion
+        48 - PHA                        68 - PLA
+        49 - EOR - Immediate            69 - ADC - Immediate
+        4A - LSR - Accumulator          6A - ROR - Accumulator
+        4B - Future Expansion           6B - Future Expansion
+        4C - JMP - Absolute             6C - JMP - Indirect
+        4D - EOR - Absolute             6D - ADC - Absolute
+        4E - LSR - Absolute             6E - ROR - Absolute
+        4F - Future Expansion           6F - Future Expansion
+        50 - BVC                        70 - BVS
+        51 - EOR - (Indirect),Y         71 - ADC - (Indirect),Y
+        52 - Future Expansion           72 - Future Expansion
+        53 - Future Expansion           73 - Future Expansion
+        54 - Future Expansion           74 - Future Expansion
+        55 - EOR - Zero Page,X          75 - ADC - Zero Page,X
+        56 - LSR - Zero Page,X          76 - ROR - Zero Page,X
+        57 - Future Expansion           77 - Future Expansion
+        58 - CLI                        78 - SEI
+        59 - EOR - Absolute,Y           79 - ADC - Absolute,Y
+        5A - Future Expansion           7A - Future Expansion
+        5B - Future Expansion           7B - Future Expansion
+        5C - Future Expansion           7C - Future Expansion
+        5D - EOR - Absolute,X           7D - ADC - Absolute,X
+        5E - LSR - Absolute,X           7E - ROR - Absolute,X
+        5F - Future Expansion           7F - Future Expansion
+
+        80 - Future Expansion           A0 - LDY - Immediate
+        81 - STA - (Indirect,X)         A1 - LDA - (Indirect,X)
+        82 - Future Expansion           A2 - LDX - Immediate
+        83 - Future Expansion           A3 - Future Expansion
+        84 - STY - Zero Page            A4 - LDY - Zero Page
+        85 - STA - Zero Page            A5 - LDA - Zero Page
+        86 - STX - Zero Page            A6 - LDX - Zero Page
+        87 - Future Expansion           A7 - Future Expansion
+        88 - DEY                        A8 - TAY
+        89 - Future Expansion           A9 - LDA - Immediate
+        8A - TXA                        AA - TAX
+        8B - Future Expansion           AB - Future Expansion
+        8C - STY - Absolute             AC - LDY - Absolute
+        8D - STA - Absolute             AD - LDA - Absolute
+        8E - STX - Absolute             AE - LDX - Absolute
+        8F - Future Expansion           AF - Future Expansion
+        90 - BCC                        B0 - BCS
+        91 - STA - (Indirect),Y         B1 - LDA - (Indirect),Y
+        92 - Future Expansion           B2 - Future Expansion
+        93 - Future Expansion           B3 - Future Expansion
+        94 - STY - Zero Page,X          B4 - LDY - Zero Page,X
+        95 - STA - Zero Page,X          B5 - LDA - Zero Page,X
+        96 - STX - Zero Page,Y          B6 - LDX - Zero Page,Y
+        97 - Future Expansion           B7 - Future Expansion
+        98 - TYA                        B8 - CLV
+        99 - STA - Absolute,Y           B9 - LDA - Absolute,Y
+        9A - TXS                        BA - TSX
+        9B - Future Expansion           BB - Future Expansion
+        9C - Future Expansion           BC - LDY - Absolute,X
+        9D - STA - Absolute,X           BD - LDA - Absolute,X
+        9E - Future Expansion           BE - LDX - Absolute,Y
+        9F - Future Expansion           BF - Future Expansion
+
+        C0 - Cpy - Immediate            E0 - CPX - Immediate
+        C1 - CMP - (Indirect,X)         E1 - SBC - (Indirect,X)
+        C2 - Future Expansion           E2 - Future Expansion
+        C3 - Future Expansion           E3 - Future Expansion
+        C4 - CPY - Zero Page            E4 - CPX - Zero Page
+        C5 - CMP - Zero Page            E5 - SBC - Zero Page
+        C6 - DEC - Zero Page            E6 - INC - Zero Page
+        C7 - Future Expansion           E7 - Future Expansion
+        C8 - INY                        E8 - INX
+        C9 - CMP - Immediate            E9 - SBC - Immediate
+        CA - DEX                        EA - NOP
+        CB - Future Expansion           EB - Future Expansion
+        CC - CPY - Absolute             EC - CPX - Absolute
+        CD - CMP - Absolute             ED - SBC - Absolute
+        CE - DEC - Absolute             EE - INC - Absolute
+        CF - Future Expansion           EF - Future Expansion
+        D0 - BNE                        F0 - BEQ
+        D1 - CMP   (Indirect),Y         F1 - SBC - (Indirect),Y
+        D2 - Future Expansion           F2 - Future Expansion
+        D3 - Future Expansion           F3 - Future Expansion
+        D4 - Future Expansion           F4 - Future Expansion
+        D5 - CMP - Zero Page,X          F5 - SBC - Zero Page,X
+        D6 - DEC - Zero Page,X          F6 - INC - Zero Page,X
+        D7 - Future Expansion           F7 - Future Expansion
+        D8 - CLD                        F8 - SED
+        D9 - CMP - Absolute,Y           F9 - SBC - Absolute,Y
+        DA - Future Expansion           FA - Future Expansion
+        DB - Future Expansion           FB - Future Expansion
+        DC - Future Expansion           FC - Future Expansion
+        DD - CMP - Absolute,X           FD - SBC - Absolute,X
+        DE - DEC - Absolute,X           FE - INC - Absolute,X
+        DF - Future Expansion           FF - Future Expansion

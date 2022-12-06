@@ -1,0 +1,59 @@
+This file describe map output format of Unofficial-MagicKit (it will
+create such a file (with .map extension) if the -M switch is specified).
+
+All numbers are in small-endian format.
+
+The header is 16-bytes long.
+
+=== Offset === Size === Description ======================================
+         0     WORD     Max zeropage address used
+         2     WORD     Max BSS address used
+         4     BYTE     Machine type (0=PC-Engine, 1=Famicom/NES)
+         5     BYTE     Max bank number (number of banks minus 1)
+         6     ten      Reserved (currently all set to zero)
+
+After the header is the first 8K of the "EMU" section.
+
+Next is the map data of each 8K bank, each 8K in size. The byte consists
+of the page number in the low three bits, and the section number in the
+high three bits; the other bits can be used for a user-defined use. The
+page number is 0 to 7 (corresponding to the 8K blocks of a 64K address
+space) and the section number can be 2 for code sections or 3 for data
+sections or 7 for unused sections.
+
+After that is the bank names, which is 16 bytes each. Consecutive banks
+with the same name are considered as joined together.
+
+Finally is the symbols list. They are in the internal "hash table" order;
+don't expect it to be in any particular order, since the hash table order
+can change.
+
+Each symbol is:
+
+=== Offset === Size === Description ======================================
+       $00     BYTE     Reserved (1 if symbol is reserved, 0 otherwise)
+       $01     BYTE     Symbol type
+       $02     WORD     Value
+       $04     BYTE     Bank
+       $05     BYTE     Page number
+       $06     WORD     Size
+       $08     BYTE     Data type
+       $09     WORD     Data size
+       $0A     BYTE     Length of name
+       $0B     ???      Name
+
+The reserved flag means that this is created by the assembler itself or by
+by the ASSIGN command; such a thing isn't part of the program, so you may
+wish to ignore it when reading this file. However, for a counted label,
+the reserved flag is always set to 1.
+
+Symbol types are:
+  1 = Undefined (may be a zero page)
+  2 = Undefined but checked in a IF expression
+  3 = Multiply defined (this is an error and should never occur)
+  4 = An ordinary symbol
+  5 = Macro
+  6 = Function
+  7 = Counted label
+
+In most cases you probably can ignore any symbol other than type 4.

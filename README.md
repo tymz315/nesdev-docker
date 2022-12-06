@@ -18,9 +18,13 @@
 
     https://github.com/freem/asm6f
 
-- NESASM(MagicKit) v2.51
+- ~~NESASM(MagicKit) v2.51~~
 
-    http://www.magicengine.com/mkit/
+    ~~http://www.magicengine.com/mkit/~~
+
+- NESASM(Unofficial MagicKit) v2.51
+
+    http://zzo38computer.org/nes_program/ppmck.zip
 
 ## How to use this image
 
@@ -134,3 +138,13 @@ Create "sample.nes" and run the following command in the Visual Studio Code term
     ```
 
 Have fun!
+
+# Changelog
+
+## [1.0.0] - 2022-12-04
+
+First release.
+
+## [1.0.1] - 2022-12-06
+
+Changed NESASM to unofficial version.

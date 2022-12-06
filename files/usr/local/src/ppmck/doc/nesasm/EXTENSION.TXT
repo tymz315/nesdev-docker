@@ -1,0 +1,224 @@
+This is document to describe unofficial extensions of MagicKit assembler.
+
+Status ask expression:
+  ?A   bank base index
+  ?B   current bank
+  ?C   current section
+  ?D   data location counter
+  ?E   error counter
+  ?L   location counter
+  ?M   map data at current location
+  ?P   page
+  ?Q   pseudopage
+  ?R   RS counter
+  ?S   source line number
+  ?X   pass counter (0=first pass, 1=last pass)
+  ?Z   max bank used
+
+Emulator I/O ($2000..$3FFF):
+  $2000  RW    Bank number
+  $2001  R     Error counter
+  $2002  RW    Location counter low byte
+  $2003  RW    Location counter high byte
+  $2004  RW    Section (0=ZP, 1=BSS, 2=CODE, 3=DATA, 4=EMU)
+  $2005   W    Send byte to output file
+  $2006  RW    Bank output length low byte
+  $2007  RW    Bank output length high byte
+  $2008   W    Send contents of ROM bank to output file
+  $2009  R     Maximum bank used
+  $200A  RW    Standard I/O
+  $200B  RW    Read next byte of data file (write anything for next file)
+  $200C  RW    Read to test EOF of data file, write to rewind file
+  $200D  RW    Address increment amount
+  $200E  RW    Low byte of address
+  $200F  RW    High byte of address
+  $2010  RW    Data at address
+  $2011  RW    Map data at address
+  $2012  RW    Data at address, postincrement address
+  $2013  RW    Map at address, postincrement address
+  $2014   W    Write location counter in decimal to output file
+  $2015   W    Compile a line of input in FIRST PASS mode
+  $2016   W    Compile a line of input in LAST PASS mode
+
+Instructions (NES/Famicom):
+  ANC          AND accumulator by immediate and carry bit7
+  ALR          AND accumulator by immediate and shift right
+  ARR          AND accumulator by immediate and rotate right
+  AXS          AND X register by accumulator and subtract immediate
+  DCP          Decrement memory and compare with accumulator
+  HLT          Jam the computer (until resets)
+  ISC          Increment memory and subtract from accumulator
+  JAM          Jam the computer (until resets)
+  KIL          Jam the computer (until resets)
+  LAX          Load into accumulator and into X register
+  RLA          Left rotate memory and AND accumulator by memory
+  RRA          Right rotate memory and add memory to accumulator
+  SAX          Store value of accumulator AND X register
+  SLO          Left shift memory and OR accumulator by memory
+  SRE          Right shift memory and XOR accumulator by memory
+
+Pseudos:
+  .ASSIGN      Update value of reserved symbols
+  .DATAFILE    Load extra data file
+  .EMU         Select emulator memory section
+  .MACGOTO     Tail call to another macro keeping same parameters
+  .MACSET      Modify macro arguments
+
+Pseudos (NES 2.0):
+  .NES2CHRRAM  Set amount of CHR RAM (non-battery, battery)
+  .NES2PRGRAM  Set amount of PRG RAM (non-battery, battery)
+  .NES2SUB     Submapper number
+  .NES2TV      TV mode (0=NTSC, 1=PAL, 2=both)
+  .NES2VS      Vs. Unisystem mode
+
+Macro special parameters:
+  \\   backslash
+  \@   unique five-digit number for each call of a macro
+  \#   number of arguments
+  \1   read argument
+  \?1  read type of argument
+  \<1  first character of argument only
+  \>1  argument except first character
+  \$1  length of argument
+
+Command-line switch:
+  -.nes    Select NES/Famicom machine type
+  -.pce    Select PC-Engine machine type
+  -o #     Override output filename
+  -M       Create map file
+
+
+== Use of .MACGOTO and .MACSET ==
+
+You can use .MACGOTO command followed by a name of a macro (no quotation
+marks) to call that macro with the same parameters as the current macro,
+and is tail call so it will not continue with the current macro after that
+one is finished. If you use it with conditions it could make a loop. You
+can also adjust the parameter of .MACGOTO by .MACSET as well. Note: \@ is
+not incremented if .MACGOTO is used.
+
+The command .MACSET is followed by three numbers (or expressions)
+delimited by commas. The first is the parameter number 1 to 9. Second is a
+mode. Third parameter depend on the mode. The selected parameter value
+will be changed for the current macro and affects subsequent commands and
+.MACGOTO calls.
+
+Mode 1: Copy argument inside of called macro. The third parameter is a
+parameter number (1 to 9) and whatever macro has been called from inside
+of this one, a parameter given to it, will be copied to this macro.
+
+Mode 2: Copy argument of current macro. Third parameter is the parameter
+number and it copy to another slot of the same macro.
+
+Mode 3: Single character. The parameter will become a single character,
+with the third parameter specifying the ASCII code of the character.
+
+Mode 4: Numeric. Third parameter is evaluated and converted to a decimal
+number which is placed in the macro arguments.
+
+Mode 5: Cut off string. Third parameter is maximum number of characters to
+keep from beginning of parameter string.
+
+Mode 6: ASCII code at position. Third parameter is position. The parameter
+is use as string, character at specified position, is converted to number
+of ASCII. If the string is shorter than that, the result is zero.
+
+Mode 7: Set and increment mcounter (the \@ counter). Third parameter is
+the amount to increase by.
+
+Mode 8: Read one byte of data from the current ROM bank.
+
+Mode 9: Get a bank name, using third parameter as the bank number.
+
+Mode 10: Read one byte of data from the map area for current ROM bank.
+
+Mode 11: Read the macro argument from standard input.
+
+Mode 12: Change the current nesting level for IF blocks. Second parameter
+is amount of adjustment, and third parameter is nonzero to skip lines. The
+resulting value will be the old nesting level.
+
+Other modes currently have no use.
+
+
+== Use of .ASSIGN ==
+
+Syntax:  .ASSIGN "name" value
+
+The name is a name in quotation marks and the value can be any expression.
+Do not include a comma between the name and value.
+
+This makes a reserved symbol and assign a value. You can assign different
+values in different parts of the input file more than once, unlike the
+ordinary labels.
+
+It runs in both passes, in the order specified in input file, and you can
+use the old value of the symbol to calculate the next value, too.
+
+
+== Use of emulator ==
+
+Unofficial MagicKit includes an emulator for use as a postprocessor. Note
+that unofficial opcodes cannot be used, except for HLT.
+
+If you put .EMU to assemble emulator codes and data in the emulator memory
+map, which is 64K bytes, except for $2000..$3FFF for I/O, $4000..$5FFF for
+data of active ROM bank (can be written as well), and $6000..$7FFF for map
+data of ROM bank.
+
+Inside of .EMU section use .ORG to specify where in the emulator RAM to
+enter data (bank/page is not used in emulator RAM).
+
+If the reset vector of the emulator is nonzero, it will run the emulator
+after both passes of assembler, before writing output binary file. If you
+write .EMU X at the start of .EMU block then it will use the emulator code
+to write the binary file instead of using the normal way. (If .EMU X is
+used but does not write to $2005 and $2008 then you will get empty output
+file.)
+
+Use HLT command to stop the emulator.
+
+Emulation is done by lib6502, with a modification to suppress the error
+message for illegal opcodes.
+
+
+== Counted labels ==
+
+Counted labels are given by making a label starting with / and optionally
+followed by the name.
+
+It is allowed to define these labels more than once, and it can keep track
+of all of their addresses (similar to the anonymous labels found in some
+other assemblers).
+
+In an expression, you can use / and the name (if applicable) followed by
+? to access the current counter, # to access the total counter, or any
+number of + or - to access the label occuring that many spaces forward or
+backward from the use.
+
+
+== Bank chaining ==
+
+If you give a bank the same name as a previous bank, then it will chain
+them together; once one 8K bank runs out it will advance to the next bank
+and set the page number correctly.
+
+To set a bank name, put a comma and quoted string after the bank number.
+
+
+== Pseudopages ==
+
+Pseudopage numbers are simply added to the value to write to the map data.
+They are set by specifying a number after a CODE or DATA command.
+
+Note: The low two bits and high three bits are used by the assembler; the
+other three bits can be used for your own use.
+
+
+== Filenames from standard input ==
+
+Where a quoted filename is expected, you may use an ampersand to instead
+read the filename from standard input.
+
+Note, that it will read it twice; once for each pass. You can avoid this
+by using a condition involving ?X in order to do it only once.

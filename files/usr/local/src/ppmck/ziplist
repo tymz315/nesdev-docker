@@ -1,0 +1,15 @@
+bin/nesasm.exe
+bin/ppmckc_e.exe
+doc/*.txt
+doc/nesasm/*.TXT
+nes_include/ppmck.asm
+nes_include/ppmck/*.h
+src/compile_unix.sh
+src/nesasm/*.c
+src/nesasm/*.h
+src/nesasm/Makefile
+src/nesasm/Makefile.unx
+src/ppmckc/*.c
+src/ppmckc/*.h
+src/ppmckc/Makefile
+ziplist
