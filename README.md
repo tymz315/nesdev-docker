@@ -141,10 +141,15 @@ Have fun!
 
 # Changelog
 
-## [1.0.0] - 2022-12-04
+## [1.0.2] - 2025-03-31
 
-First release.
+Add support for ARM64 architecture.
 
 ## [1.0.1] - 2022-12-06
 
 Changed NESASM to unofficial version.
+
+## [1.0.0] - 2022-12-04
+
+First release.
+
